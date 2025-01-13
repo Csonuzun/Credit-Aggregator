@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    // Enable default imports
+    "allowSyntheticDefaultImports": true,
+    // Allow synthetic default imports
+    "strict": true,
+    // Optional: Keep strict mode enabled
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/components/*": [
+        "src/components/*"
+      ],
+      "@/components/ui/*": [
+        "src/components/ui/*"
+      ],
+      "@/lib/*": [
+        "src/lib/*"
+      ],
+      "@/hooks/*": [
+        "src/hooks/*"
+      ]
+    },
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/@shadcn/ui"
+    ]
+  }
+}

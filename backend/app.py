@@ -2,14 +2,16 @@ from flask import Flask, request, jsonify, send_from_directory
 import numpy as np
 import plotly.graph_objs as go
 import plotly.io as pio
+from flask_cors import CORS
 
 app = Flask(__name__, static_folder='.')
+CORS(app)  # Enable CORS for all routes
 
 
 @app.route('/')
 def index():
     # Serve the index.html file when visiting the root URL
-    return send_from_directory('.', 'index.html')
+    return send_from_directory('..', 'index.html')
 
 
 @app.route('/calculate', methods=['POST'])

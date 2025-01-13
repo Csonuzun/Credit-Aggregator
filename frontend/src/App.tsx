@@ -5,8 +5,6 @@ import BestRateDisplay from "./components/BestRateDisplay";
 import {Button} from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-import "../public/globals.css";
-
 
 interface GraphData {
     labels: string[];

@@ -4,6 +4,7 @@ import InterestRateChart from "./components/InterestRateChart";
 import BestRateDisplay from "./components/BestRateDisplay";
 import {Button} from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ThemeToggle } from "./components/ThemeToggle";
 
 
 interface GraphData {
@@ -42,6 +43,11 @@ const App = () => {
     return (
 
         <div className="container mx-auto p-4 space-y-8">
+            <header className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold">Bank Interest Rate Comparison</h1>
+                <ThemeToggle/>
+            </header>
+
             <header className="text-center">
                 <h1 className="text-3xl font-bold">Bank Interest Rate Comparison</h1>
                 <p className="text mt-2">Calculate and compare the best interest rates for your deposit.</p>
@@ -57,7 +63,7 @@ const App = () => {
                     value={deposit}
                     onChange={(e) => setDeposit(Number(e.target.value))}
                 />
-                <Button variant="destructive" className="mt-4"
+                <Button variant="default" className="mt-4"
                         onClick={handleCalculateBest}
                 >
                     Calculate Best Rate

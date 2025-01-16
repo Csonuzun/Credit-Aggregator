@@ -21,14 +21,14 @@
         "ranges": [
             { "min": 5500, "max": 49999, "min_balance": 5000, "rate": 53 },
             { "min": 50000, "max": 99999, "min_balance": 7500, "rate": 53 },
-            { "min": 100000, "max": 249999, "min_balance": 15000, "rate": 53 },
+            { "min": 100000, "max": 249999, "min_balance": 12500, "rate": 53 },
             { "min": 250000, "max": 499999, "min_balance": 30000, "rate": 53 },
-            { "min": 500000, "max": 749999, "min_balance": 50000, "rate": 53 },
-            { "min": 750000, "max": 999999, "min_balance": 50000, "rate": 53 },
-            { "min": 1000000, "max": 1249999, "min_balance": 75000, "rate": 53 },
-            { "min": 1250000, "max": 1499999, "min_balance": 75000, "rate": 53 },
-            { "min": 1500000, "max": 1749999, "min_balance": 75000, "rate": 53 },
-            { "min": 1750000, "max": 2000000, "min_balance": 75000, "rate": 53 }
+            { "min": 500000, "max": 749999, "min_balance": 50000, "rate": 50 },
+            { "min": 750000, "max": 999999, "min_balance": 70000, "rate": 48 },
+            { "min": 1000000, "max": 1249999, "min_balance": 85000, "rate": 47 },
+            { "min": 1250000, "max": 1499999, "min_balance": 110000, "rate": 47 },
+            { "min": 1500000, "max": 1749999, "min_balance": 125000, "rate": 47 },
+            { "min": 1750000, "max": 2000000, "min_balance": 150000, "rate": 47 }
         ]
     },
     "enpara": {

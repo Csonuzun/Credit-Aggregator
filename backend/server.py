@@ -1,36 +1,30 @@
+# server.py
+
 import json
 from flask import Flask, request, jsonify, send_from_directory
 import numpy as np
 from flask_cors import CORS
+import math
 
 app = Flask(__name__, static_folder='.')
 CORS(app)  # Enable CORS for all routes
 
-# Load bank data from JSON file
+# Load bank data from JSON
 try:
     with open('banks.json', 'r') as f:
         banks = json.load(f)
 except FileNotFoundError:
-    raise FileNotFoundError("The 'banks.json' file is missing. Please ensure it's in the same directory as 'app.py'.")
+    raise FileNotFoundError(
+        "The 'banks.json' file is missing. Please ensure it's in the same directory as 'server.py'."
+    )
 
-# Define split configurations separately or within banks.json
-split_dict = {
-    "odeabank_hosgeldin": [
-        (50000, "enpara", 7426),
-        (100000, "enpara", 26651),
-        (250000, "odeabank_devam", 73294),
-        (500000, "getir_finans", 237529),
-        (750000, "odeabank_devam", 210794),
-        (1000000, "getir_finans", 548958)
-    ],
-    "getir_finans": [
-        (25000, "enpara", 7426),
-        (50000, "enpara", 7426),
-        (100000, "odeabank_hosgeldin", 120743),
-        (500000, "odeabank_hosgeldin", 310386),
-        (1000000, "odeabank_hosgeldin", 616815)
-    ]
-}
+# Load the pre-generated split configs
+try:
+    with open('split_config.json', 'r') as f:
+        split_dict = json.load(f)
+except FileNotFoundError:
+    # If we don't have a split_config.json, fallback or create an empty dict
+    split_dict = {}
 
 
 def calculate_effective_rate_helper(deposit, ranges):
@@ -57,24 +51,7 @@ def index():
     """
     Serve the index.html file.
     """
-    return send_from_directory('..', 'index.html')
-
-
-@app.route('/calculate', methods=['POST'])
-def calculate_effective_rate():
-    """
-    Route to calculate the effective interest rate for a given deposit.
-    """
-    data = request.json
-    deposit = data.get('deposit', 0)
-    bank_name = data.get('bank_name', 'getir_finans')  # Default to 'getir_finans'
-
-    if bank_name not in banks:
-        return jsonify({"error": "Invalid bank name."}), 400
-
-    # Call the helper function to calculate the effective rate
-    effective_rate = calculate_effective_rate_helper(deposit, banks[bank_name]['ranges'])
-    return jsonify({"effective_rate": round(effective_rate, 2)})
+    return send_from_directory('.', 'index.html')
 
 
 @app.route('/graph-data', methods=['GET'])
@@ -106,21 +83,49 @@ def graph_data():
     })
 
 
+@app.route('/banks', methods=['GET'])
+def get_banks():
+    """
+    Endpoint to return the list of available banks.
+    """
+    return jsonify({"banks": list(banks.keys())})
+
+
 @app.route('/calculate-best', methods=['POST'])
 def calculate_best():
     """
-    Route to calculate the best bank for a given deposit.
+    Route to calculate the best bank for a given deposit and selected banks.
     """
     data = request.json
     deposit = data.get('deposit', 0)
+    selected_banks = data.get('banks', [])
 
+    # Validate deposit
     if not isinstance(deposit, (int, float)) or deposit <= 0:
         return jsonify({"error": "Invalid deposit amount."}), 400
 
+    # Validate selected banks
+    if not isinstance(selected_banks, list) or not all(isinstance(bank, str) for bank in selected_banks):
+        return jsonify({"error": "Invalid banks list."}), 400
+
+    if not selected_banks:
+        return jsonify({"error": "No banks selected."}), 400
+
+    # Ensure all selected banks exist
+    invalid_banks = [bank for bank in selected_banks if bank not in banks]
+    if invalid_banks:
+        return jsonify({"error": f"Invalid bank names: {', '.join(invalid_banks)}."}), 400
+
+    # Calculate effective rates only for selected banks
     rates = {}
-    for bank_key, bank_info in banks.items():
-        rate = calculate_effective_rate_helper(deposit, bank_info['ranges'])
-        rates[bank_key] = rate
+    for bank_key in selected_banks:
+        bank_info = banks.get(bank_key)
+        if bank_info:
+            rate = calculate_effective_rate_helper(deposit, bank_info['ranges'])
+            rates[bank_key] = rate
+
+    if not rates:
+        return jsonify({"error": "No valid banks found for calculation."}), 400
 
     best_bank = max(rates, key=rates.get)
     best_rate = rates[best_bank]
@@ -130,9 +135,10 @@ def calculate_best():
         "best_rate": round(best_rate, 2)
     }
 
-    one_day_return = calculate_one_day_return(deposit, best_rate)
-    response["one_day_return"] = round(one_day_return, 2)
+    one_day_return_value = calculate_one_day_return(deposit, best_rate)
+    response["one_day_return"] = round(one_day_return_value, 2)
 
+    # Check if there's a split strategy for best_bank in split_dict
     split_needed, split_info = check_split_strategy(deposit, best_bank)
     if split_needed:
         val = calculate_effective_rate_after_split(deposit, best_bank, split_info)
@@ -154,9 +160,13 @@ def calculate_effective_rate_after_split(deposit, best_bank, split_info):
     """
     Calculate the effective interest rate and 1-day return after splitting the deposit between two banks.
     """
-    best_deposit = split_info['recommended_best_deposit']
-    alternative_deposit = split_info['recommended_alternative_deposit']
+    recommended_main_bank_deposit = split_info['recommended_main_bank_deposit']
     alternative_bank = split_info['alternative_bank']
+    alternative_bank_deposit = split_info['recommended_alternative_deposit']
+
+    if recommended_main_bank_deposit + alternative_bank_deposit > deposit:
+        if alternative_bank_deposit < 0:
+            alternative_bank_deposit = 0
 
     best_bank_info = banks.get(best_bank)
     alternative_bank_info = banks.get(alternative_bank)
@@ -167,40 +177,44 @@ def calculate_effective_rate_after_split(deposit, best_bank, split_info):
             "one_day_return_after_split": 0.0
         }
 
-    best_rate = calculate_effective_rate_helper(best_deposit, best_bank_info['ranges'])
-    alternative_rate = calculate_effective_rate_helper(alternative_deposit, alternative_bank_info['ranges'])
+    # Calculate effective rates for each split deposit
+    best_rate = calculate_effective_rate_helper(recommended_main_bank_deposit, best_bank_info['ranges'])
+    alternative_rate = calculate_effective_rate_helper(alternative_bank_deposit, alternative_bank_info['ranges'])
 
-    best_bank_return = calculate_one_day_return(best_deposit, best_rate)
-    alternative_bank_return = calculate_one_day_return(alternative_deposit, alternative_rate)
+    # Calculate 1-day returns
+    best_bank_return = calculate_one_day_return(recommended_main_bank_deposit, best_rate)
+    alternative_bank_return = calculate_one_day_return(alternative_bank_deposit, alternative_rate)
 
-    total_one_day_return_after_split = best_bank_return + alternative_bank_return
-    effective_rate_after_split = (total_one_day_return_after_split * 365) / deposit * 100
+    total_return = best_bank_return + alternative_bank_return
+    effective_rate_after_split = (total_return * 365) / deposit * 100
 
     return {
         "effective_rate_after_split": round(effective_rate_after_split, 2),
-        "one_day_return_after_split": round(total_one_day_return_after_split, 2)
+        "one_day_return_after_split": round(total_return, 2)
     }
 
 
-def check_split_strategy(deposit, best_bank):
+def check_split_strategy(deposit, main_bank):
     """
-    Check if a split strategy is needed for the best bank.
-    Returns a tuple (split_needed: bool, split_info: dict)
+    Uses split_dict (loaded from split_config.json) to see
+    if there's a recommended split for this deposit.
     """
-    if best_bank not in split_dict:
+    if main_bank not in split_dict:
         return False, {}
 
-    splits = split_dict[best_bank]
+    splits = split_dict[main_bank]
 
-    for split in splits:
-        split_min_limit, alternative_bank, split_amount = split
-        best_bank_info = banks.get(best_bank)
+    for split_data in splits:
+        max_limit = split_data['max_limit']
+        alternative_bank = split_data['alternative_bank']
+        split_upper_limit = split_data['split_upper_limit']
+        main_bank_info = banks.get(main_bank)
 
-        if not best_bank_info:
+        if not main_bank_info:
             continue
 
         applicable_range = None
-        for range_item in best_bank_info['ranges']:
+        for range_item in main_bank_info['ranges']:
             if range_item['min'] <= deposit <= range_item['max']:
                 applicable_range = range_item
                 break
@@ -208,13 +222,12 @@ def check_split_strategy(deposit, best_bank):
         if not applicable_range:
             continue
 
-        min_balance = applicable_range.get('min_balance', 0)
-        if deposit >= min_balance + split_amount:
-            recommended_best_deposit = min_balance
-            recommended_alternative_deposit = deposit - recommended_best_deposit
+        if deposit <= max_limit + split_upper_limit:
+            recommended_alternative_deposit = deposit - max_limit
+
             return True, {
-                "recommended_best_deposit": recommended_best_deposit,
-                "best_bank": best_bank,
+                "recommended_main_bank_deposit": max_limit,
+                "best_bank": main_bank,
                 "alternative_bank": alternative_bank,
                 "recommended_alternative_deposit": recommended_alternative_deposit
             }

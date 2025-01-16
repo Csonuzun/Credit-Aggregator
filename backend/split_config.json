@@ -1,0 +1,149 @@
+{
+  "getir_finans": [
+    {
+      "max_limit": 2500,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 50
+    },
+    {
+      "max_limit": 25000,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 7426
+    },
+    {
+      "max_limit": 50000,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 7426
+    },
+    {
+      "max_limit": 100000,
+      "alternative_bank": "teb_marifetli_hesap",
+      "split_upper_limit": 266458
+    },
+    {
+      "max_limit": 500000,
+      "alternative_bank": "odeabank_hosgeldin",
+      "split_upper_limit": 310386
+    }
+  ],
+  "onhesap": [
+    {
+      "max_limit": 49999,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 6136
+    },
+    {
+      "max_limit": 99999,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 12446
+    },
+    {
+      "max_limit": 249999,
+      "alternative_bank": "odeabank_devam",
+      "split_upper_limit": 50001
+    },
+    {
+      "max_limit": 499999,
+      "alternative_bank": "odeabank_devam",
+      "split_upper_limit": 220907
+    },
+    {
+      "max_limit": 749999,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 181258
+    }
+  ],
+  "enpara": [
+    {
+      "max_limit": 100000,
+      "alternative_bank": "odeabank_devam",
+      "split_upper_limit": 90794
+    },
+    {
+      "max_limit": 500000,
+      "alternative_bank": "getir_finans",
+      "split_upper_limit": 257511
+    }
+  ],
+  "odeabank_hosgeldin": [
+    {
+      "max_limit": 7500,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 50
+    },
+    {
+      "max_limit": 50000,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 6519
+    },
+    {
+      "max_limit": 100000,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 26651
+    },
+    {
+      "max_limit": 250000,
+      "alternative_bank": "odeabank_devam",
+      "split_upper_limit": 73294
+    },
+    {
+      "max_limit": 500000,
+      "alternative_bank": "getir_finans",
+      "split_upper_limit": 237529
+    },
+    {
+      "max_limit": 750000,
+      "alternative_bank": "odeabank_devam",
+      "split_upper_limit": 210794
+    }
+  ],
+  "odeabank_devam": [
+    {
+      "max_limit": 7500,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 50
+    },
+    {
+      "max_limit": 50000,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 9441
+    },
+    {
+      "max_limit": 100000,
+      "alternative_bank": "getir_finans",
+      "split_upper_limit": 114745
+    },
+    {
+      "max_limit": 250000,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 212725
+    }
+  ],
+  "teb_marifetli_hesap": [
+    {
+      "max_limit": 49999,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 6519
+    },
+    {
+      "max_limit": 99999,
+      "alternative_bank": "onhesap",
+      "split_upper_limit": 138176
+    },
+    {
+      "max_limit": 249999,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 40072
+    },
+    {
+      "max_limit": 499999,
+      "alternative_bank": "odeabank_hosgeldin",
+      "split_upper_limit": 100001
+    },
+    {
+      "max_limit": 749999,
+      "alternative_bank": "enpara",
+      "split_upper_limit": 50
+    }
+  ]
+}

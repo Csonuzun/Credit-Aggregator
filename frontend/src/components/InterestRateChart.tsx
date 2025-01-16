@@ -57,7 +57,7 @@ const chartConfig = {
     },
     tebMarifetliHesap: { // Added Teb Marifetli Hesap
         label: "Teb Marifetli Hesap",
-        color: "hsl(var(--chart-1))",
+        color: "hsl(var(--chart-6))",
     }
 } satisfies ChartConfig;
 

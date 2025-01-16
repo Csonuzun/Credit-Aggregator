@@ -1,3 +1,4 @@
+// InterestRateChart.tsx
 import {
     LineChart,
     Line,
@@ -27,8 +28,10 @@ interface GraphData {
     labels: string[];
     getir_finans_rates: number[];
     enpara_rates: number[];
-    odea_bank_hosgeldin_rates: number[];
-    odea_bank_devam_rates: number[];
+    odeabank_hosgeldin_rates: number[];
+    odeabank_devam_rates: number[];
+    onhesap_rates: number[]; // Added On Hesap
+    teb_marifetli_hesap_rates: number[]; // Added Teb Marifetli Hesap
 }
 
 const chartConfig = {
@@ -48,6 +51,14 @@ const chartConfig = {
         label: "Odea Bank - Devam",
         color: "hsl(var(--chart-4))",
     },
+    onHesap: { // Added On Hesap
+        label: "On Hesap",
+        color: "hsl(var(--chart-5))",
+    },
+    tebMarifetliHesap: { // Added Teb Marifetli Hesap
+        label: "Teb Marifetli Hesap",
+        color: "hsl(var(--chart-1))",
+    }
 } satisfies ChartConfig;
 
 const InterestRateChart = ({data}: { data: GraphData }) => {
@@ -59,8 +70,10 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
         deposit: label,
         getirFinans: data.getir_finans_rates[index],
         enpara: data.enpara_rates[index],
-        odeaBankHosgeldin: data.odea_bank_hosgeldin_rates[index],
-        odeaBankDevam: data.odea_bank_devam_rates[index],
+        odeaBankHosgeldin: data.odeabank_hosgeldin_rates[index],
+        odeaBankDevam: data.odeabank_devam_rates[index],
+        onHesap: data.onhesap_rates[index], // Added On Hesap
+        tebMarifetliHesap: data.teb_marifetli_hesap_rates[index], // Added Teb Marifetli Hesap
     }));
 
     return (
@@ -101,12 +114,12 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
                                             <div
                                                 className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
                                                 style={{
-                                                    backgroundColor: `var(--color-${name})`,
+                                                    backgroundColor: chartConfig[name as keyof typeof chartConfig]?.color || "#000",
                                                 }}
                                             />
                                             <span className="font-medium">
-                        {chartConfig[name as keyof typeof chartConfig]?.label || name}
-                      </span>
+                                                {chartConfig[name as keyof typeof chartConfig]?.label || name}
+                                            </span>
                                             <div className="ml-auto text-muted-foreground font-mono">
                                                 {value}%
                                             </div>
@@ -120,7 +133,7 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
                         <Line
                             type="monotone"
                             dataKey="getirFinans"
-                            stroke="hsl(var(--chart-1))"
+                            stroke={chartConfig.getirFinans.color}
                             strokeWidth={2}
                             dot={false}
                             activeDot={true}
@@ -128,7 +141,7 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
                         <Line
                             type="monotone"
                             dataKey="enpara"
-                            stroke="hsl(var(--chart-2))"
+                            stroke={chartConfig.enpara.color}
                             strokeWidth={2}
                             dot={false}
                             activeDot={true}
@@ -136,7 +149,7 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
                         <Line
                             type="monotone"
                             dataKey="odeaBankHosgeldin"
-                            stroke="hsl(var(--chart-3))"
+                            stroke={chartConfig.odeaBankHosgeldin.color}
                             strokeWidth={2}
                             dot={false}
                             activeDot={true}
@@ -144,7 +157,23 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
                         <Line
                             type="monotone"
                             dataKey="odeaBankDevam"
-                            stroke="hsl(var(--chart-4))"
+                            stroke={chartConfig.odeaBankDevam.color}
+                            strokeWidth={2}
+                            dot={false}
+                            activeDot={true}
+                        />
+                        <Line // Added On Hesap Line
+                            type="monotone"
+                            dataKey="onHesap"
+                            stroke={chartConfig.onHesap.color}
+                            strokeWidth={2}
+                            dot={false}
+                            activeDot={true}
+                        />
+                        <Line // Added Teb Marifetli Hesap Line
+                            type="monotone"
+                            dataKey="tebMarifetliHesap"
+                            stroke={chartConfig.tebMarifetliHesap.color}
                             strokeWidth={2}
                             dot={false}
                             activeDot={true}
@@ -159,7 +188,7 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
                             Trending up by 5.2% this month <TrendingUp className="h-4 w-4"/>
                         </div>
                         <div className="flex items-center gap-2 leading-none text-muted-foreground">
-                            Showing total visitors for the last 6 months.
+                            Showing interest rates for various banks over different deposit amounts.
                         </div>
                     </div>
                 </div>

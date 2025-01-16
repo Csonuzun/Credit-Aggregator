@@ -27,8 +27,10 @@ interface GraphData {
     labels: string[];
     getir_finans_rates: number[];
     enpara_rates: number[];
-    odea_bank_hosgeldin_rates: number[];
-    odea_bank_devam_rates: number[];
+    odeabank_hosgeldin_rates: number[];
+    odeabank_devam_rates: number[];
+    onhesap_rates: number[]; // Added On Hesap Rates
+    teb_marifetli_hesap_rates: number[]; // Added Teb Marifetli Hesap Rates
 }
 
 const App = () => {

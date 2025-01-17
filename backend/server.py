@@ -23,7 +23,6 @@ try:
     with open('split_config.json', 'r') as f:
         split_dict = json.load(f)
 except FileNotFoundError:
-    # If we don't have a split_config.json, fallback or create an empty dict
     split_dict = {}
 
 
@@ -94,11 +93,14 @@ def get_banks():
 @app.route('/calculate-best', methods=['POST'])
 def calculate_best():
     """
-    Route to calculate the best bank for a given deposit and selected banks.
+    Route to calculate:
+      1) The best bank for a given deposit and selected banks.
+      2) The daily balances (day 0..day X) if 'days' is provided.
     """
     data = request.json
     deposit = data.get('deposit', 0)
     selected_banks = data.get('banks', [])
+    days = data.get('days', 0)  # <--- new field for how many days user wants
 
     # Validate deposit
     if not isinstance(deposit, (int, float)) or deposit <= 0:
@@ -127,6 +129,7 @@ def calculate_best():
     if not rates:
         return jsonify({"error": "No valid banks found for calculation."}), 400
 
+    # 1) Identify best bank among selected
     best_bank = max(rates, key=rates.get)
     best_rate = rates[best_bank]
 
@@ -135,16 +138,24 @@ def calculate_best():
         "best_rate": round(best_rate, 2)
     }
 
+    # 2) Calculate one day return
     one_day_return_value = calculate_one_day_return(deposit, best_rate)
     response["one_day_return"] = round(one_day_return_value, 2)
 
-    # Check if there's a split strategy for best_bank in split_dict
+    # 3) Check if there's a split strategy
     split_needed, split_info = check_split_strategy(deposit, best_bank)
     if split_needed:
         val = calculate_effective_rate_after_split(deposit, best_bank, split_info)
         response["split_strategy"] = split_info
         response["effective_rate_after_split"] = val["effective_rate_after_split"]
         response["one_day_return_after_split"] = val["one_day_return_after_split"]
+
+    # 4) NEW: If 'days' > 0, compute daily balances on the backend
+    if isinstance(days, int) and days > 0:
+        daily_balances = compute_daily_balances_helper(deposit, best_rate, days)
+        response["daily_balances"] = daily_balances
+    else:
+        response["daily_balances"] = []
 
     return jsonify(response)
 
@@ -154,6 +165,23 @@ def calculate_one_day_return(deposit, effective_rate):
     Calculate the 1-day return based on the effective annual rate.
     """
     return deposit * (effective_rate / 100) / 365
+
+
+def compute_daily_balances_helper(initial_deposit, best_rate, days):
+    """
+    Compute daily balances for 'days' days, using best_rate (annual %).
+    dailyRate = best_rate/100/365.
+    Return a list of floats, day 0..day X.
+    """
+    daily_rate = (best_rate / 100.0) / 365.0
+    balance = float(initial_deposit)
+    balances = [balance]
+
+    for _ in range(days):
+        interest = balance * daily_rate
+        balance += interest
+        balances.append(balance)
+    return balances
 
 
 def calculate_effective_rate_after_split(deposit, best_bank, split_info):

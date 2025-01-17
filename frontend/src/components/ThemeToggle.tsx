@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export function ThemeToggle() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -13,11 +15,16 @@ export function ThemeToggle() {
   }, [isDarkMode]);
 
   return (
-    <button
-      onClick={() => setIsDarkMode((prev) => !prev)}
-      className="p-2 bg-card-foreground text-card rounded-lg"
-    >
-      {isDarkMode ? "Light Mode" : "Dark Mode"}
-    </button>
+      <div className="flex items-center space-x-2">
+        <Switch
+            onClick={() => setIsDarkMode((prev) => !prev)}
+            className="bg-card-foreground text-card rounded-lg">
+        </Switch>
+        <Label htmlFor="theme">
+            {isDarkMode ? "Dark" : "Light"} Mode
+        </Label>
+
+      </div>
+
   );
 }

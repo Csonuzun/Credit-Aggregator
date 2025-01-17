@@ -14,6 +14,7 @@ import InterestRateChart from "./components/InterestRateChart" // Shadcn UI char
 interface CalculateBestRequest {
   deposit: number
   banks: string[]
+  days: number
 }
 
 interface BankListResponse {
@@ -28,7 +29,7 @@ export default function App() {
   const [graphData, setGraphData] = useState<GraphData | null>(null)
   const [trimmedGraphData, setTrimmedGraphData] = useState<GraphData | null>(null)
 
-  // We'll store daily balances on a separate chart
+  // We store daily balances from server
   const [dailyBalances, setDailyBalances] = useState<number[]>([])
 
   // We'll store xMin, xMax => [initialDeposit..finalDeposit]
@@ -74,18 +75,111 @@ export default function App() {
   }, [])
 
   // -----------------------------
-  // Helper to parse "5,000 TL" -> numeric
+  // Toggle bank selection
   // -----------------------------
-  const parseDepositToNumber = (label: string) => {
-    const numeric = label.replace(/[^\d]/g, "")
-    return parseInt(numeric, 10) || 0
+  const handleBankSelection = (bank: string) => {
+    setSelectedBanks((prev) =>
+      prev.includes(bank) ? prev.filter((b) => b !== bank) : [...prev, bank]
+    )
   }
 
   // -----------------------------
-  // Trim the data to [xMin, xMax]
+  // Calculate best rate & daily balances
   // -----------------------------
+  const handleCalculateBest = async () => {
+    setBestRate(null)
+    setError(null)
+    setIsLoading(true)
+
+    const depositNum = Number(deposit)
+    const daysNum = Number(days)
+    if (isNaN(depositNum) || depositNum <= 0) {
+      setError("Please enter a valid deposit amount.")
+      setIsLoading(false)
+      return
+    }
+    if (selectedBanks.length === 0) {
+      setError("Please select at least one bank.")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const requestBody: CalculateBestRequest = {
+        deposit: depositNum,
+        banks: selectedBanks,
+        days: daysNum, // pass days to server
+      }
+
+      // server calculates best rate & daily balances
+      const response = await axios.post<{
+        best_bank: string
+        best_rate: number
+        one_day_return: number
+        split_strategy?: any
+        effective_rate_after_split?: number
+        one_day_return_after_split?: number
+        daily_balances: number[]
+      }>("http://127.0.0.1:5000/calculate-best", requestBody)
+
+      // store bestRate
+      const { best_bank, best_rate, daily_balances, one_day_return } = response.data
+      setBestRate({
+        best_bank,
+        best_rate,
+        one_day_return
+      } as BestRate)
+
+      // store daily balances
+      if (daily_balances && daily_balances.length > 0) {
+        setDailyBalances(daily_balances)
+        // set xMin and xMax based on daily_balances
+        setXMin(daily_balances[0])
+        setXMax(daily_balances[daily_balances.length - 1])
+      } else {
+        setDailyBalances([])
+        setXMin(undefined)
+        setXMax(undefined)
+      }
+
+      // After setting xMin and xMax, trimmedGraphData will be updated via useEffect
+
+    } catch (error: any) {
+      console.error("Error calculating the best rate:", error)
+      setError("Failed to calculate the best rate. Please try again later.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // -----------------------------
+  // Trim the data to [xMin, xMax] and keep only best bank's data
+  // -----------------------------
+  useEffect(() => {
+    if (!graphData) return
+
+    let updated: GraphData = JSON.parse(JSON.stringify(graphData))
+
+    if (xMin !== undefined && xMax !== undefined && xMax > xMin) {
+      updated = trimGraphData(updated, xMin, xMax)
+    }
+
+    if (bestRate?.best_bank) {
+      updated = reduceToBestBank(updated, bestRate.best_bank)
+    }
+
+    setTrimmedGraphData(updated)
+  }, [graphData, xMin, xMax, bestRate])
+
+  // -----------------------------
+  // Helper Functions
+  // -----------------------------
+  /**
+   * Trim the graph data to only include deposits between min and max.
+   */
   const trimGraphData = (original: GraphData, min: number, max: number): GraphData => {
     const newLabels: string[] = []
+    const depositValues: number[] = []
     const getirRates: number[] = []
     const enparaRates: number[] = []
     const hosgeldinRates: number[] = []
@@ -93,11 +187,10 @@ export default function App() {
     const onHesapRates: number[] = []
     const tebMarifetliRates: number[] = []
 
-    original.labels.forEach((label, i) => {
-      const depositVal = parseDepositToNumber(label)
-      // FIXED: use && instead of 'and' and remove the colon
-      if (depositVal >= min && depositVal <= max) {
-        newLabels.push(label)
+    original.depositValues.forEach((depositValue, i) => {
+      if (depositValue >= min && depositValue <= max) {
+        newLabels.push(original.labels[i])
+        depositValues.push(depositValue)
         getirRates.push(original.getir_finans_rates[i])
         enparaRates.push(original.enpara_rates[i])
         hosgeldinRates.push(original.odeabank_hosgeldin_rates[i])
@@ -109,6 +202,7 @@ export default function App() {
 
     return {
       labels: newLabels,
+      depositValues: depositValues,
       getir_finans_rates: getirRates,
       enpara_rates: enparaRates,
       odeabank_hosgeldin_rates: hosgeldinRates,
@@ -118,12 +212,10 @@ export default function App() {
     }
   }
 
-  // -----------------------------
-  // Filter out all banks except best bank
-  // -----------------------------
+  /**
+   * Reduce the graph data to only include the best bank's rates.
+   */
   const reduceToBestBank = (original: GraphData, bestBankKey: string): GraphData => {
-    // We'll keep the same labels but zero out or remove the arrays not matching bestBankKey
-
     const length = original.labels.length
     let gfRates: number[] = new Array(length).fill(0)
     let enpRates: number[] = new Array(length).fill(0)
@@ -157,6 +249,7 @@ export default function App() {
 
     return {
       labels: [...original.labels],
+      depositValues: [...original.depositValues],
       getir_finans_rates: gfRates,
       enpara_rates: enpRates,
       odeabank_hosgeldin_rates: hosRates,
@@ -166,105 +259,11 @@ export default function App() {
     }
   }
 
-  // -----------------------------
-  // On xMin/xMax or bestRate changes => build the final chart data
-  // -----------------------------
-  useEffect(() => {
-    if (!graphData) return
-
-    let updated: GraphData = JSON.parse(JSON.stringify(graphData))
-
-    if (xMin !== undefined && xMax !== undefined && xMax > xMin) {
-      updated = trimGraphData(updated, xMin, xMax)
-    }
-
-    if (bestRate?.best_bank) {
-      updated = reduceToBestBank(updated, bestRate.best_bank)
-    }
-
-    setTrimmedGraphData(updated)
-  }, [graphData, xMin, xMax, bestRate])
-
-  // Toggle bank selection
-  const handleBankSelection = (bank: string) => {
-    setSelectedBanks((prev) =>
-      prev.includes(bank) ? prev.filter((b) => b !== bank) : [...prev, bank]
-    )
-  }
-
-  // Calculate best rate & daily balances
-  const handleCalculateBest = async () => {
-    setBestRate(null)
-    setError(null)
-    setIsLoading(true)
-
-    const depositNum = Number(deposit)
-    if (isNaN(depositNum) || depositNum <= 0) {
-      setError("Please enter a valid deposit amount.")
-      setIsLoading(false)
-      return
-    }
-    if (selectedBanks.length === 0) {
-      setError("Please select at least one bank.")
-      setIsLoading(false)
-      return
-    }
-
-    try {
-      const requestBody: CalculateBestRequest = {
-        deposit: depositNum,
-        banks: selectedBanks,
-      }
-      const response = await axios.post<BestRate>(
-        "http://127.0.0.1:5000/calculate-best",
-        requestBody
-      )
-      setBestRate(response.data)
-
-      computeDailyBalances(depositNum, response.data)
-    } catch (error: any) {
-      console.error("Error calculating the best rate:", error)
-      setError("Failed to calculate the best rate. Please try again later.")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const computeDailyBalances = (initialDeposit: number, brData: BestRate) => {
-    const daysNum = Number(days)
-    if (isNaN(daysNum) || daysNum <= 0) {
-      setDailyBalances([])
-      setXMin(undefined)
-      setXMax(undefined)
-      return
-    }
-
-    const dailyRate = (brData.best_rate / 100) / 365
-    let balance = initialDeposit
-    const arr: number[] = [balance]
-
-    for (let i = 1; i <= daysNum; i++) {
-      balance += balance * dailyRate
-      arr.push(balance)
-    }
-    setDailyBalances(arr)
-
-    // xMin => initial deposit, xMax => final deposit
-    if (arr.length > 1) {
-      const final = arr[arr.length - 1]
-      setXMin(initialDeposit)
-      setXMax(final)
-    } else {
-      setXMin(undefined)
-      setXMax(undefined)
-    }
-  }
-
   return (
     <div className="container mx-auto p-4 space-y-8">
       <header className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Bank Interest Rate Comparison</h1>
-        <ThemeToggle/>
+        <ThemeToggle />
       </header>
 
       <section className="text-center">
@@ -335,38 +334,29 @@ export default function App() {
       </div>
 
       {/* If we have trimmedGraphData, show the chart */}
-      {!trimmedGraphData && (
+      {trimmedGraphData && (
         <InterestRateChart
           data={trimmedGraphData}
           title="Interest Rates by Bank (Best Bank Only)"
         />
       )}
 
+      {/* Show best rate display + daily balances side by side, if any */}
       {(bestRate || dailyBalances.length > 1) && (
         <div className="flex flex-col md:flex-row md:space-x-8">
-          {/* Best Rate on the left */}
           {bestRate && (
             <div className="flex-1">
-              <BestRateDisplay bestRate={bestRate}/>
+              <BestRateDisplay bestRate={bestRate} />
             </div>
           )}
-
-          {/* Daily Balances on the right */}
           {dailyBalances.length > 1 && (
             <div className="flex-1">
               <DailyBalanceChart
                 dailyBalances={dailyBalances}
-                title="Your Daily Balances"
+                title="Daily Balances (from backend)"
                 daysLabel={days ? `Day 0 - Day ${days}` : undefined}
               />
             </div>
-          )}
-          {/* If we have trimmedGraphData, show the chart */}
-          {trimmedGraphData && (
-            <InterestRateChart
-              data={trimmedGraphData}
-              title="Interest Rates by Bank (Best Bank Only)"
-            />
           )}
         </div>
       )}

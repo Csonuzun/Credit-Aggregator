@@ -31,8 +31,8 @@ def calculate_effective_rate_helper(deposit, ranges):
     Helper function to calculate the effective rate for a given deposit and range.
     """
     for range_item in ranges:
-        min_limit = range_item.get("min")
-        max_limit = range_item.get("max")
+        min_limit = range_item.get("min", 0)
+        max_limit = range_item.get("max", float('inf'))
         min_balance = range_item.get("min_balance", 0)
         rate = range_item.get("rate", 0)
 
@@ -57,27 +57,48 @@ def index():
 def graph_data():
     """
     Endpoint to provide graph data for all banks.
-    Returns deposit labels and corresponding rates for each bank.
+    Returns deposit labels, deposit values, and corresponding rates for each bank.
     """
     labels = []
+    deposit_values = []
     graph_rates = {key: [] for key in banks.keys()}
 
     # Generate log-spaced deposits
     fixed_min = 2500  # Minimum deposit
     fixed_max = 6000000  # Maximum deposit
-    num_points = 100  # Number of points in the graph
-    deposits = np.logspace(np.log10(fixed_min), np.log10(fixed_max), num=num_points)
+    num_points = 500  # Number of points in the log-spaced series
+    logspace_deposits = np.logspace(np.log10(fixed_min), np.log10(fixed_max), num=num_points)
+    logspace_deposits = set(int(d) for d in logspace_deposits)  # convert to int & set
 
-    for deposit in deposits:
-        deposit = int(deposit)  # Convert to integer for simplicity
+    # Collect deposit values from each bank's ranges
+    range_deposits = set()
+    for bank_key, bank_info in banks.items():
+        for rng in bank_info['ranges']:
+            # Each range_item has structure: {"min":..., "max":..., "rate":...}
+            min_limit = rng.get("min", 0)
+            max_limit = rng.get("max", float('inf'))
+
+            # We'll definitely add max_limit if it's not inf
+            if max_limit != float('inf'):
+                range_deposits.add(int(max_limit))
+
+    # Combine the sets
+    combined_deposits = logspace_deposits.union(range_deposits)
+
+    # Convert to a sorted list
+    deposits_sorted = sorted(combined_deposits)
+
+    # 3) Build data structures for final output
+    for deposit in deposits_sorted:
+        deposit_values.append(deposit)
         labels.append(f'{deposit:,} TL')
-
         for bank_key, bank_info in banks.items():
             rate = calculate_effective_rate_helper(deposit, bank_info['ranges'])
             graph_rates[bank_key].append(round(rate, 2))
 
     return jsonify({
         "labels": labels,
+        "depositValues": deposit_values,
         **{f"{key}_rates": rates for key, rates in graph_rates.items()}
     })
 

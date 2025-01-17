@@ -22,7 +22,7 @@ import {
     CardHeader,
     CardTitle,
 } from "./ui/card";
-import {TrendingUp} from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 interface GraphData {
     labels: string[];
@@ -61,7 +61,7 @@ const chartConfig = {
     }
 } satisfies ChartConfig;
 
-const InterestRateChart = ({data}: { data: GraphData }) => {
+const InterestRateChart = ({ data }: { data: GraphData }) => {
     if (!data || !data.labels) {
         return <p className="text-center">Loading graph data...</p>;
     }
@@ -76,16 +76,46 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
         tebMarifetliHesap: data.teb_marifetli_hesap_rates[index], // Added Teb Marifetli Hesap
     }));
 
+    // Function to calculate peak values for each bank
+    const calculatePeakValues = () => {
+        const peakValues: { [key: string]: { deposit: string; rate: number } } = {};
+
+        Object.keys(chartConfig).forEach((bankKey) => {
+            const rateKey = bankKey as keyof typeof chartConfig;
+            let peakRate = -Infinity;
+            let peakDeposit = "";
+
+            chartData.forEach((dataPoint) => {
+                const rate = dataPoint[rateKey];
+                if (rate > peakRate) {
+                    peakRate = rate;
+                    peakDeposit = dataPoint.deposit;
+                }
+            });
+
+            if (peakRate !== -Infinity) {
+                peakValues[bankKey] = {
+                    deposit: peakDeposit,
+                    rate: peakRate,
+                };
+            }
+        });
+
+        return peakValues;
+    };
+
+    const peakValues = calculatePeakValues();
+
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Interest Rate Comparison</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-lg">Interest Rate Comparison</CardTitle>
+                <CardDescription className="text-sm">
                     Compare interest rates for multiple banks over different deposit amounts.
                 </CardDescription>
             </CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig} className="aspect-auto h-[500px] w-full">
+            <CardContent className="flex flex-col md:flex-row">
+                <ChartContainer config={chartConfig} className="flex-1 aspect-auto h-[500px] w-full">
                     <LineChart
                         data={chartData}
                         margin={{
@@ -93,18 +123,20 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
                             right: 12,
                         }}
                     >
-                        <CartesianGrid vertical={false}/>
+                        <CartesianGrid vertical={false} />
                         <XAxis
                             dataKey="deposit"
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
-                            label={{value: "Deposit Amount (TL)", position: "insideBottom", offset: -5}}
+                            label={{ value: "Deposit Amount (TL)", position: "insideBottom", offset: -5, fontSize: 12 }}
+                            fontSize={10}
                         />
                         <YAxis
                             tickLine={false}
                             axisLine={false}
-                            label={{value: "Interest Rate (%)", angle: -90, position: "insideLeft"}}
+                            label={{ value: "Interest Rate (%)", angle: -90, position: "insideLeft", fontSize: 12 }}
+                            fontSize={10}
                         />
                         <ChartTooltip
                             content={
@@ -117,10 +149,10 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
                                                     backgroundColor: chartConfig[name as keyof typeof chartConfig]?.color || "#000",
                                                 }}
                                             />
-                                            <span className="font-medium">
+                                            <span className="font-medium text-xs">
                                                 {chartConfig[name as keyof typeof chartConfig]?.label || name}
                                             </span>
-                                            <div className="ml-auto text-muted-foreground font-mono">
+                                            <div className="ml-auto text-muted-foreground font-mono text-xs">
                                                 {value}%
                                             </div>
                                         </div>
@@ -128,7 +160,7 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
                                 />
                             }
                         />
-                        <ChartLegend content={<ChartLegendContent/>}/>
+                        <ChartLegend content={<ChartLegendContent />} />
                         {/* Lines for all banks */}
                         <Line
                             type="monotone"
@@ -180,12 +212,33 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
                         />
                     </LineChart>
                 </ChartContainer>
+                {/* Peak Values Info Section */}
+                <div className="mt-4 md:mt-0 md:ml-4 w-full md:w-1/4">
+                    <Card className="p-3">
+                        <CardHeader>
+                            <CardTitle className="text-md">Peak Rates</CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-2">
+                            <ul className="text-sm">
+                                {Object.entries(peakValues).map(([bankKey, peak]) => (
+                                    <li key={bankKey} className="flex justify-between py-1">
+                                        <span className="font-medium">
+                                            {chartConfig[bankKey as keyof typeof chartConfig].label}
+                                        </span>
+                                        <span className="text-xs">
+                                            {peak.rate}% @ {peak.deposit}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                </div>
             </CardContent>
             <CardFooter>
                 <div className="flex w-full items-start gap-2 text-sm">
                     <div className="grid gap-2">
                         <div className="flex items-center gap-2 font-medium leading-none">
-                            Trending up by 5.2% this month <TrendingUp className="h-4 w-4"/>
                         </div>
                         <div className="flex items-center gap-2 leading-none text-muted-foreground">
                             Showing interest rates for various banks over different deposit amounts.
@@ -195,6 +248,7 @@ const InterestRateChart = ({data}: { data: GraphData }) => {
             </CardFooter>
         </Card>
     );
+
 };
 
 export default InterestRateChart;

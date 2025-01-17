@@ -11,14 +11,14 @@
             { "min": 500001, "max": 1000000, "min_balance": 40000, "rate": 47.5 },
             { "min": 1000001, "max": 2000000, "min_balance": 75000, "rate": 47.5 },
             { "min": 2000001, "max": 2100000, "min_balance": 100000, "rate": 47.5 },
-            { "min": 2100001, "max": 5100000, "min_balance": 100000, "rate": 30 },
-            { "min": 5100001, "max": 999999999, "min_balance": 100000, "rate": 30 }
+            { "min": 2100001, "max": 5100000, "min_balance": 100000, "rate": 30 }
         ]
     },
     "onhesap": {
         "name": "On Hesap",
         "type": "dynamic",
         "ranges": [
+            { "min": 0, "max": 5500, "min_balance": 0, "rate": 0 },
             { "min": 5500, "max": 49999, "min_balance": 5000, "rate": 53 },
             { "min": 50000, "max": 99999, "min_balance": 7500, "rate": 53 },
             { "min": 100000, "max": 249999, "min_balance": 12500, "rate": 53 },
@@ -61,12 +61,12 @@
         "name": "Odea Bank - Devam",
         "type": "dynamic",
         "ranges": [
-            { "min": 0, "max": 7500, "min_balance": 7500, "rate": 43.0 },
+            { "min": 0, "max": 7500, "min_balance": 0, "rate": 0 },
             { "min": 7500, "max": 50000, "min_balance": 7500, "rate": 43.0 },
-            { "min": 50001, "max": 100000, "min_balance": 10000, "rate": 43.0 },
+            { "min": 50000, "max": 100000, "min_balance": 10000, "rate": 43.0 },
             { "min": 100001, "max": 250000, "min_balance": 20000, "rate": 43.0 },
             { "min": 250001, "max": 500000, "min_balance": 40000, "rate": 41.0 },
-            { "min": 500501, "max": 750000, "min_balance": 75000, "rate": 40.0 },
+            { "min": 500000, "max": 750000, "min_balance": 75000, "rate": 40.0 },
             { "min": 750001, "max": 1000000, "min_balance": 125000, "rate": 40.0 },
             { "min": 1000001, "max": 2000000, "min_balance": 200000, "rate": 40.0 },
             { "min": 2000001, "max": 5000000, "min_balance": 300000, "rate": 35.0 },
@@ -77,6 +77,7 @@
         "name": "TEB Marifetli Hesap",
         "type": "dynamic",
         "ranges": [
+            { "min": 0, "max": 2000, "min_balance": 0, "rate": 0 },
             { "min": 2000, "max": 49999, "min_balance": 5000, "rate": 51 },
             { "min": 50000, "max": 99999, "min_balance": 7500, "rate": 51 },
             { "min": 100000, "max": 249999, "min_balance": 15000, "rate": 51 },

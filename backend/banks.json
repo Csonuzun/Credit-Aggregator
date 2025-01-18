@@ -31,16 +31,7 @@
             { "min": 1750000, "max": 2000000, "min_balance": 150000, "rate": 47 }
         ]
     },
-    "enpara": {
-        "name": "Enpara",
-        "type": "dynamic",
-        "ranges": [
-            { "min": 0, "max": 100000, "min_balance": 0, "rate": 32.00 },
-            { "min": 100001, "max": 500000, "min_balance": 0, "rate": 35.00 },
-            { "min": 500001, "max": 1000000, "min_balance": 0, "rate": 38.00 },
-            { "min": 1000001, "max": 999999999, "min_balance": 0, "rate": 41.00 }
-        ]
-    },
+
     "odeabank_hosgeldin": {
         "name": "Odea Bank - Hoşgeldin",
         "type": "dynamic",
@@ -77,8 +68,8 @@
         "name": "TEB Marifetli Hesap",
         "type": "dynamic",
         "ranges": [
-            { "min": 0, "max": 2000, "min_balance": 0, "rate": 0 },
-            { "min": 2000, "max": 49999, "min_balance": 5000, "rate": 51 },
+            { "min": 0, "max": 5000, "min_balance": 0, "rate": 0 },
+            { "min": 5000, "max": 49999, "min_balance": 5000, "rate": 51 },
             { "min": 50000, "max": 99999, "min_balance": 7500, "rate": 51 },
             { "min": 100000, "max": 249999, "min_balance": 15000, "rate": 51 },
             { "min": 250000, "max": 499999, "min_balance": 30000, "rate": 51 },
@@ -88,6 +79,16 @@
             { "min": 1500001, "max": 2000000, "min_balance": 100000, "rate": 51 },
             { "min": 2000001, "max": 3000000, "min_balance": 150000, "rate": 51 },
             { "min": 3000001, "max": 4000000, "min_balance": 200000, "rate": 51 }
+        ]
+    },
+        "enpara": {
+        "name": "Enpara",
+        "type": "dynamic",
+        "ranges": [
+            { "min": 0, "max": 100000, "min_balance": 0, "rate": 32.00 },
+            { "min": 100001, "max": 500000, "min_balance": 0, "rate": 35.00 },
+            { "min": 500001, "max": 1000000, "min_balance": 0, "rate": 38.00 },
+            { "min": 1000001, "max": 999999999, "min_balance": 0, "rate": 41.00 }
         ]
     }
 }
